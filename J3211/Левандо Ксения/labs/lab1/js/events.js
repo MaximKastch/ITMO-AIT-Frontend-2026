@@ -1,4 +1,6 @@
-const events = [
+// create list of events by merging a list of default ones 
+// with ones created by organizers
+const defaultEvents = [
 
 {
     id: 1,
@@ -39,6 +41,23 @@ const events = [
 
 ];
 
+// get from  localStorage
+let savedEvents = JSON.parse(localStorage.getItem("events")) || [];
+
+// using map to avoid duplicates
+const eventsMap = new Map();
+
+// default ones first
+defaultEvents.forEach(ev => eventsMap.set(ev.id, ev));
+
+// add created ones
+savedEvents.forEach(ev => eventsMap.set(ev.id, ev));
+
+// get joint array
+let events = Array.from(eventsMap.values());
+
+// this array back to local storage
+localStorage.setItem("events", JSON.stringify(events));
 
 document.getElementById("typeFilter").addEventListener("change", renderEvents);
 document.getElementById("cityFilter").addEventListener("input", renderEvents);
