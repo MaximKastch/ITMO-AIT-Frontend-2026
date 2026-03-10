@@ -1,3 +1,15 @@
+document.addEventListener("DOMContentLoaded", () => {
+    // if auth as organizer - cannot auth as user 
+    if (localStorage.getItem("organizerAuth") === "true") {
+        alert("You are already logged in as an organizer. Please logout first.");
+        window.location.href = "organizer-dashboard.html";
+    }
+
+    // if auth as user - redirect to dasboard
+    if (localStorage.getItem("auth") === "true") {
+        window.location.href = "dashboard.html";
+    }
+
 document.getElementById("loginForm").addEventListener("submit", function(e){
     e.preventDefault();
 
@@ -22,4 +34,5 @@ document.getElementById("loginForm").addEventListener("submit", function(e){
     } else {
         alert("Wrong email or password");
     }
+});
 });
