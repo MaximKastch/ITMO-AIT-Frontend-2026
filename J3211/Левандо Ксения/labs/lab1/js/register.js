@@ -1,6 +1,6 @@
 const form = document.getElementById("registerForm");
 
-form.addEventListener("submit", function (e) {
+form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
     const name = document.getElementById("name").value.trim();
@@ -41,30 +41,36 @@ form.addEventListener("submit", function (e) {
         return;
     }
 
-    // Create a user
-    const user = {
-        name,
-        email,
-        password
-    };
+    try{
+        // check if already exists
+        const checkResponse = await fetch(`http://localhost:3000/users?email=${email}`);
+        const existingUsers = await checkResponse.json();
 
-    let users = JSON.parse(localStorage.getItem("users")) || [];
+        if (existingUsers.length > 0) {
+            alert("User with this email already exists");
+            return;
+        }
+        // create user
+        const newUser = {
+            name,
+            email,
+            password
+        };
 
-    // check email unoccupied
-    const userExists = users.find(u => u.email === email);
-
-    if (userExists) {
-        alert("User with this email already exists");
-        return;
-    }
-    // add user
-    users.push(user);
-
-    // Save in localStorage
-    localStorage.setItem("users", JSON.stringify(users));
-
+        await fetch("http://localhost:3000/users", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(newUser)
+        });
     alert("Registration successful!");
 
     // Switch to login page
     window.location.href = "login.html";
+
+    } catch (error) {
+        console.error("Registration error:", error);
+        alert("Registration failed");
+    }
 });

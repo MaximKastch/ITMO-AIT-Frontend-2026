@@ -5,51 +5,89 @@ document.addEventListener("DOMContentLoaded", () => {
     if (localStorage.getItem("auth") === "true") {
         alert("You are already logged in as a user. Please logout first.");
         window.location.href = "dashboard.html";
+        return;
     }
 
     //if already authorized - redirect
     if (localStorage.getItem("organizerAuth") === "true") {
         window.location.href = "organizer-dashboard.html";
+        return;
     }
 
     // --- register ---
     const regForm = document.getElementById("orgRegisterForm");
     if (regForm) {
-        regForm.onsubmit = function(e) {
+        regForm.onsubmit = async function(e) {
             e.preventDefault();
             const name = document.getElementById("orgRegName").value.trim();
-            const email = document.getElementById("orgRegEmail").value.trim();
+            const email = document.getElementById("orgRegEmail").value.trim().toLowerCase();
             const password = document.getElementById("orgRegPassword").value;
+            try {
+                // check if organizer exists
+                const check = await fetch(`http://localhost:3000/organizers?email=${email}`);
+                const existing = await check.json();
 
-            if (organizers.find(o => o.email === email)) {
-                return alert("Organizer with this email already exists");
-            }
+                if (existing.length > 0) {
+                    alert("Organizer with this email already exists");
+                    return;
+                }
 
-            organizers.push({ name, email, password });
-            localStorage.setItem("organizers", JSON.stringify(organizers));
+                const newOrganizer = {
+                    name,
+                    email,
+                    password
+                };
 
+                await fetch("http://localhost:3000/organizers", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(newOrganizer)
+                });
+        
             alert("Organizer registered successfully! You can login now.");
             regForm.reset();
+            } catch (error){
+                console.error("Registration error:", error);
+                alert("Registration failed");
+            }
         };
     }
 
     // --- log in ---
     const loginForm = document.getElementById("orgLoginForm");
     if (loginForm) {
-        loginForm.onsubmit = function(e) {
+        loginForm.onsubmit = async function(e) {
             e.preventDefault();
-            const email = document.getElementById("orgLoginEmail").value.trim();
+            const email = document.getElementById("orgLoginEmail").value.trim().toLowerCase();
             const password = document.getElementById("orgLoginPassword").value;
 
-            const org = organizers.find(o => o.email === email && o.password === password);
-            if (!org) return alert("Wrong email or password");
+            try {
+                const response = await fetch(`http://localhost:3000/organizers?email=${email}`);
+                const organizers = await response.json();
+                if (organizers.length === 0) {
+                    alert("Organizer not found");
+                    return;
+                }
+                const org = organizers[0];
+                if (org.password !== password) {
+                    alert("Wrong password");
+                    return;
+                }
+                // save organizer logged-in
+                localStorage.setItem("organizerAuth", "true");
+                localStorage.setItem("organizerEmail", email);
 
-            // save organizer logged-in
-            localStorage.setItem("organizerAuth", "true");
-            localStorage.setItem("organizerEmail", email);
+                // redirect to organizer dashboard
+                window.location.href = "organizer-dashboard.html";
+            }
+            catch (error) {
 
-            // redirect to organizer dashboard
-            window.location.href = "organizer-dashboard.html";
+                console.error("Login error:", error);
+                alert("Login failed");
+
+            }
         };
     }
 });
